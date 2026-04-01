@@ -17,6 +17,10 @@ Mov_Opcode :: enum {
 	IMMEDIATE_TO_REG_DISP
 }
 
+le_bytes_to_u16 :: proc(low: u8, high: u8) -> u16 {
+	return (u16(high) << 8) | u16(low)
+}
+
 bit_string_to_opt :: proc(s: string) -> Mov_Opcode {
 	if strings.has_prefix(s, "1011") {
 		return .IMMEDIATE_TO_REG_NO_DISP
@@ -637,7 +641,7 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 					mov_memory_no_displacement(
 						s1,
 						s2,
-						(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+						le_bytes_to_u16(data[i + 2], data[i + 3]),
 					),
 				)
 				incr += 2
@@ -653,7 +657,7 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 				mov_memory_mode_displacement(
 					s1,
 					s2,
-					(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+					le_bytes_to_u16(data[i + 2], data[i + 3]),
 				),
 			)
 			incr += 2
@@ -706,7 +710,7 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 						mov_memory_no_displacement(
 							s1,
 							s2,
-							(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+							le_bytes_to_u16(data[i + 2], data[i + 3]),
 							u8(data[i + 4]),
 						),
 					)
@@ -717,8 +721,8 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 						mov_memory_no_displacement(
 							s1,
 							s2,
-							(u16(data[i + 3]) << 8) | u16(data[i + 2]),
-							(u16(data[i + 5]) << 8) | u16(data[i + 4]),
+							le_bytes_to_u16(data[i + 2], data[i + 3]),
+							le_bytes_to_u16(data[i + 4], data[i + 5]),
 						),
 					)
 					incr += 4
@@ -737,7 +741,7 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 						mov_memory_no_disp_with_data(
 							s1,
 							s2,
-							(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+							le_bytes_to_u16(data[i + 2], data[i + 3]),
 						),
 					)
 					incr += 2
@@ -758,7 +762,7 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 						s1,
 						s2,
 						u8(data[i + 2]),
-						(u16(data[i + 4]) << 8) | u16(data[i + 3]),
+						le_bytes_to_u16(data[i + 3], data[i + 4]),
 					),
 				)
 				incr += 3
@@ -772,7 +776,7 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 					mov_memory_mode_displacement(
 						s1,
 						s2,
-						(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+						le_bytes_to_u16(data[i + 2], data[i + 3]),
 						u8(data[i + 4]),
 					),
 				)
@@ -783,8 +787,8 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 					mov_memory_mode_displacement(
 						s1,
 						s2,
-						(u16(data[i + 3]) << 8) | u16(data[i + 2]),
-						(u16(data[i + 5]) << 8) | u16(data[i + 4]),
+						le_bytes_to_u16(data[i + 2], data[i + 3]),
+						le_bytes_to_u16(data[i + 4], data[i + 5]),
 					),
 				)
 				incr += 4
