@@ -38,7 +38,6 @@ ByteInstructions :: struct {
 		u8,
 		u16,
 	},
-	method_name:  string,
 }
 
 read_binary_listing :: proc(path: string) -> (bi: [dynamic]ByteInstructions, err: os.Error) {

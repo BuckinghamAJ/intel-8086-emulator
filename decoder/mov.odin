@@ -46,385 +46,65 @@ bit_string_to_mod_field_code :: proc(s: string) -> Mod_Field_Code {
 
 
 
-mov_register_mode_no_data :: proc(s1: string, s2: string) -> ByteInstructions {
+make_mov_reg_to_reg :: proc(
+	s1: string,
+	s2: string,
+	displacement: union{u8, u16} = nil,
+	data: union{u8, u16} = nil,
+) -> ByteInstructions {
 	return ByteInstructions{
 		code = .MOV,
 		byte1 = Byte1{
-			opcode = string(s1[0:6]),
+			opcode    = string(s1[0:6]),
 			direction = rune(s1[6]),
-			word_op = rune(s1[7]),
+			word_op   = rune(s1[7]),
 		},
 		byte2 = Byte2{
 			mod = string(s2[0:2]),
 			reg = string(s2[2:5]),
-			rm = string(s2[5:8]),
+			rm  = string(s2[5:8]),
 		},
-		method_name = "mov_register_mode_no_data",
+		displacement = displacement,
+		data = data,
 	}
 }
 
-mov_register_mode_u8data :: proc(s1: string, s2: string, data: u8) -> ByteInstructions {
+make_mov_immediate_with_mod :: proc(
+	s1: string,
+	s2: string,
+	displacement: union{u8, u16} = nil,
+	data: union{u8, u16} = nil,
+) -> ByteInstructions {
 	return ByteInstructions{
 		code = .MOV,
 		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			direction = '0',
+			opcode  = string(s1[0:7]),
 			word_op = rune(s1[7]),
 		},
 		byte2 = Byte2{
 			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
+			rm  = string(s2[5:8]),
 		},
+		displacement = displacement,
 		data = data,
-		method_name = "mov_register_mode_u8data",
 	}
 }
 
-mov_register_mode_u16data :: proc(s1: string, s2: string, data: u16) -> ByteInstructions {
+make_mov_immediate_to_reg :: proc(
+	s1: string,
+	data: union{u8, u16} = nil,
+) -> ByteInstructions {
 	return ByteInstructions{
 		code = .MOV,
 		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			direction = '0',
-			word_op = rune(s1[7]),
+			opcode  = string(s1[0:4]),
+			word_op = rune(s1[4]),
 		},
 		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
+			reg = string(s1[5:8]),
 		},
 		data = data,
-		method_name = "mov_register_mode_u16data",
 	}
-}
-
-mov_register_mode :: proc{
-	mov_register_mode_no_data,
-	mov_register_mode_u8data,
-	mov_register_mode_u16data
-}
-
-mov_memory_mode_no_disp_not_110 :: proc(s1: string, s2: string) -> ByteInstructions {
-	rm := string(s2[5:8])
-
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:6]),
-			direction = rune(s1[6]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			reg = string(s2[2:5]),
-			rm = string(s2[5:8]),
-		},
-		method_name = "mov_memory_mode_no_disp_not_110",
-	}
-}
-
-mov_memory_mode_no_disp_110 :: proc(s1: string, s2: string, displacement: u16) -> ByteInstructions {
-
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:6]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			reg = string(s2[2:5]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		method_name = "mov_memory_mode_no_disp_110",
-	}
-}
-
-mov_memory_no_disp_110_with_u8data :: proc(s1: string, s2: string, displacement: u16, data: u8) -> ByteInstructions {
-
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		data = data,
-		method_name = "mov_memory_no_disp_110_with_u8data",
-	}
-}
-
-mov_memory_no_disp_110_with_u16data :: proc(s1: string, s2: string, displacement: u16, data: u16) -> ByteInstructions {
-
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		data = data,
-		method_name = "mov_memory_no_disp_110_with_u16data",
-	}
-}
-
-mov_memory_no_disp_with_u8data :: proc(s1: string, s2: string, displacement: u16, data: u8) -> ByteInstructions {
-
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		data = data,
-		method_name = "mov_memory_no_disp_with_u8data",
-	}
-}
-
-mov_memory_no_disp_with_data :: proc(s1: string, s2: string, data: union {u8, u16}) -> ByteInstructions {
-
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		data = data,
-		method_name = "mov_memory_no_disp_with_data",
-	}
-}
-
-mov_memory_no_displacement :: proc{
-	mov_memory_mode_no_disp_110,
-	mov_memory_mode_no_disp_not_110,
-	mov_memory_no_disp_110_with_u8data,
-	mov_memory_no_disp_110_with_u16data,
-}
-
-
-mov_memory_mode_8bit_displacement  :: proc(s1: string, s2: string, displacement: u8) ->  ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:6]),
-			direction = rune(s1[6]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			reg = string(s2[2:5]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		method_name = "mov_memory_mode_8bit_displacement",
-	}
-}
-
-mov_memory_mode_16bit_displacement :: proc(s1: string, s2: string, displacement: u16) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:6]),
-			direction = rune(s1[6]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			reg = string(s2[2:5]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		method_name = "mov_memory_mode_16bit_displacement",
-	}
-}
-
-mov_memory_mode_8bit_displacement_data :: proc(s1: string, s2: string, displacement: u8, data: u8) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		data = data,
-		method_name = "mov_memory_mode_8bit_displacement_data",
-	}
-}
-
-mov_memory_mode_16bit_displacement_data :: proc(s1: string, s2: string, displacement: u16, data: u16) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		data = data,
-		method_name = "mov_memory_mode_16bit_displacement_data",
-	}
-}
-
-mov_memory_mode_u16displacement_u8data :: proc(s1: string, s2: string, displacement: u16, data: u8) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		data = data,
-		method_name = "mov_memory_mode_u16displacement_u8data",
-	}
-}
-
-mov_memory_u16displacement_u8data :: proc(s1: string, s2: string, displacement: u16, data: u8) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		data = data,
-		method_name = "mov_memory_u16displacement_u8data",
-	}
-}
-
-mov_memory_mode_u8displacement_u16data :: proc(s1: string, s2: string, displacement: u8, data: u16) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		byte1 = Byte1{
-			opcode = string(s1[0:7]),
-			word_op = rune(s1[7]),
-		},
-		byte2 = Byte2{
-			mod = string(s2[0:2]),
-			rm = string(s2[5:8]),
-		},
-		displacement = displacement,
-		data = data,
-		method_name = "mov_memory_mode_u8displacement_u16data",
-	}
-}
-
-
-mov_memory_mode_displacement :: proc{
-	mov_memory_mode_8bit_displacement,
-	mov_memory_mode_16bit_displacement,
-	mov_memory_mode_8bit_displacement_data,
-	mov_memory_mode_16bit_displacement_data,
-	mov_memory_mode_u16displacement_u8data,
-	mov_memory_mode_u8displacement_u16data
-}
-
-mov_immediate_to_register_u8 :: proc(s1: string, data: u8) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		opcode = string(s1[0:4]),
-		word_op = rune(s1[4]),
-		reg = string(s1[5:8]),
-		data = data
-	}
-}
-
-mov_immediate_to_register_u16 :: proc(s1: string, data: u16) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		opcode = string(s1[0:4]),
-		word_op = rune(s1[4]),
-		reg = string(s1[5:8]),
-		data = data
-	}
-}
-
-mov_immediate_to_register_disp_u8 :: proc(s1: string, s2: string, data: u8, displacement: u8) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		opcode = string(s1[0:7]),
-		word_op = rune(s1[7]),
-		mod = string(s2[0:2]),
-		rm = string(s2[5:8]),
-		data = data,
-		displacement = displacement,
-	}
-}
-
-mov_immediate_to_register_disp_u16 :: proc(s1: string, s2: string, data: u16, displacement: u16) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		opcode = string(s1[0:7]),
-		word_op = rune(s1[7]),
-		mod = string(s2[0:2]),
-		rm = string(s2[5:8]),
-		data = data,
-		displacement = displacement,
-	}
-}
-
-mov_imediate_to_register_u16disp_u8 :: proc(s1: string, s2: string, data: u8, displacement: u16) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		opcode = string(s1[0:7]),
-		word_op = rune(s1[7]),
-		mod = string(s2[0:2]),
-		rm = string(s2[5:8]),
-		data = data,
-		displacement = displacement,
-	}
-}
-
-mov_imediate_to_register_u8disp_u16 :: proc(s1: string, s2: string, data: u16, displacement: u8) -> ByteInstructions {
-	return ByteInstructions{
-		code = .MOV,
-		opcode = string(s1[0:7]),
-		word_op = rune(s1[7]),
-		mod = string(s2[0:2]),
-		rm = string(s2[5:8]),
-		data = data,
-		displacement = displacement,
-	}
-}
-
-mov_immediate_to_register :: proc{
-	mov_immediate_to_register_u8,
-	mov_immediate_to_register_u16,
-	mov_immediate_to_register_disp_u8,
-	mov_immediate_to_register_disp_u16,
-	mov_imediate_to_register_u16disp_u8,
-	mov_imediate_to_register_u8disp_u16,
 }
 
 reg_assembly_data :: proc(data : union{u8, u16}) -> string {
@@ -633,31 +313,31 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 
 		switch bit_string_to_mod_field_code(string(s2[0:2])) {
 		case .REG_MODE:
-			append(instructions, mov_register_mode(s1, s2))
+			append(instructions, make_mov_reg_to_reg(s1, s2))
 		case .MEMORY_MODE_NO_DISPLACEMENT:
 			if string(s2[5:8]) == "110" {
 				append(
 					instructions,
-					mov_memory_no_displacement(
+					make_mov_reg_to_reg(
 						s1,
 						s2,
-						le_bytes_to_u16(data[i + 2], data[i + 3]),
+						displacement = le_bytes_to_u16(data[i + 2], data[i + 3]),
 					),
 				)
 				incr += 2
 			} else {
-				append(instructions, mov_memory_no_displacement(s1, s2))
+				append(instructions, make_mov_reg_to_reg(s1, s2))
 			}
 		case .MEMORY_MODE_8_BIT_DISPLACEMENT:
-			append(instructions, mov_memory_mode_displacement(s1, s2, u8(data[i + 2])))
+			append(instructions, make_mov_reg_to_reg(s1, s2, displacement = u8(data[i + 2])))
 			incr += 1
 		case .MEMORY_MODE_16_BIT_DISPLACEMENT:
 			append(
 				instructions,
-				mov_memory_mode_displacement(
+				make_mov_reg_to_reg(
 					s1,
 					s2,
-					le_bytes_to_u16(data[i + 2], data[i + 3]),
+					displacement = le_bytes_to_u16(data[i + 2], data[i + 3]),
 				),
 			)
 			incr += 2
@@ -674,13 +354,13 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 		case '0':
 			b2 := data[i + 1]
 			incr += 1
-			append(instructions, mov_immediate_to_register(s1, u8(b2)))
+			append(instructions, make_mov_immediate_to_reg(s1, data = u8(b2)))
 		case '1':
 			b2 := data[i + 1]
 			b3 := data[i + 2]
 			incr += 2
 
-			append(instructions, mov_immediate_to_register(s1, (u16(b3) << 8) | u16(b2)))
+			append(instructions, make_mov_immediate_to_reg(s1, data = (u16(b3) << 8) | u16(b2)))
 		}
 	case .IMMEDIATE_TO_REG_DISP:
 		s2 := fmt.tprintf("%08b", data[i + 1])
@@ -692,12 +372,12 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 			case '0':
 				b3 := data[i + 2]
 				incr += 1
-				append(instructions, mov_register_mode(s1, s2, u8(b3)))
+				append(instructions, make_mov_immediate_with_mod(s1, s2, data = u8(b3)))
 			case '1':
 				b3 := data[i + 2]
 				b4 := data[i + 3]
 				incr += 2
-				append(instructions, mov_register_mode(s1, s2, (u16(b4) << 8) | u16(b3)))
+				append(instructions, make_mov_immediate_with_mod(s1, s2, data = le_bytes_to_u16(b3, b4)))
 
 			}
 		case .MEMORY_MODE_NO_DISPLACEMENT:
@@ -707,22 +387,22 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 				case '0':
 					append(
 						instructions,
-						mov_memory_no_displacement(
+						make_mov_immediate_with_mod(
 							s1,
 							s2,
-							le_bytes_to_u16(data[i + 2], data[i + 3]),
-							u8(data[i + 4]),
+							displacement = le_bytes_to_u16(data[i + 2], data[i + 3]),
+							data = u8(data[i + 4]),
 						),
 					)
 					incr += 3
 				case '1':
 					append(
 						instructions,
-						mov_memory_no_displacement(
+						make_mov_immediate_with_mod(
 							s1,
 							s2,
-							le_bytes_to_u16(data[i + 2], data[i + 3]),
-							le_bytes_to_u16(data[i + 4], data[i + 5]),
+							displacement = le_bytes_to_u16(data[i + 2], data[i + 3]),
+							data = le_bytes_to_u16(data[i + 4], data[i + 5]),
 						),
 					)
 					incr += 4
@@ -732,16 +412,16 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 				case '0':
 					append(
 						instructions,
-						mov_memory_no_disp_with_data(s1, s2, u8(data[i + 2])),
+						make_mov_immediate_with_mod(s1, s2, data = u8(data[i + 2])),
 					)
 					incr += 1
 				case '1':
 					append(
 						instructions,
-						mov_memory_no_disp_with_data(
+						make_mov_immediate_with_mod(
 							s1,
 							s2,
-							le_bytes_to_u16(data[i + 2], data[i + 3]),
+							data = le_bytes_to_u16(data[i + 2], data[i + 3]),
 						),
 					)
 					incr += 2
@@ -752,17 +432,17 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 			case '0':
 				append(
 					instructions,
-					mov_memory_mode_displacement(s1, s2, u8(data[i + 2]), u8(data[i + 3])),
+					make_mov_immediate_with_mod(s1, s2, displacement = u8(data[i + 2]), data = u8(data[i + 3])),
 				)
 				incr += 2
 			case '1':
 				append(
 					instructions,
-					mov_memory_mode_displacement(
+					make_mov_immediate_with_mod(
 						s1,
 						s2,
-						u8(data[i + 2]),
-						le_bytes_to_u16(data[i + 3], data[i + 4]),
+						displacement = u8(data[i + 2]),
+						data = le_bytes_to_u16(data[i + 3], data[i + 4]),
 					),
 				)
 				incr += 3
@@ -773,22 +453,22 @@ decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]Byt
 			case '0':
 				append(
 					instructions,
-					mov_memory_mode_displacement(
+					make_mov_immediate_with_mod(
 						s1,
 						s2,
-						le_bytes_to_u16(data[i + 2], data[i + 3]),
-						u8(data[i + 4]),
+						displacement = le_bytes_to_u16(data[i + 2], data[i + 3]),
+						data = u8(data[i + 4]),
 					),
 				)
 				incr += 3
 			case '1':
 				append(
 					instructions,
-					mov_memory_mode_displacement(
+					make_mov_immediate_with_mod(
 						s1,
 						s2,
-						le_bytes_to_u16(data[i + 2], data[i + 3]),
-						le_bytes_to_u16(data[i + 4], data[i + 5]),
+						displacement = le_bytes_to_u16(data[i + 2], data[i + 3]),
+						data = le_bytes_to_u16(data[i + 4], data[i + 5]),
 					),
 				)
 				incr += 4
