@@ -49,8 +49,12 @@ test_rm_assembly :: proc(t: ^testing.T) {
 	}
 
 	for tc, _ in test_cases {
-		result, err := decoder.rm_assembly(tc.rm, tc.word_op, tc.mod)
-		testing.expect(t, err == .None)
+		bi := decoder.ByteInstructions{
+			byte2 = decoder.Byte2{ rm = tc.rm },
+			byte1 = decoder.Byte1{ word_op = tc.word_op },
+		}
+		result, err := decoder.rm_assembly(bi, tc.mod)
+		testing.expect(t, err == decoder.Error.None)
 		testing.expect(t, result == tc.expected)
 	}
 

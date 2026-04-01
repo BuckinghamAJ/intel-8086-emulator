@@ -618,3 +618,189 @@ mov_create_assembly_instructions_from :: proc(byte_instruction: ByteInstructions
 	return assembly_instruction, .None
 
 }
+
+decode_mov :: proc(s1: string, data: []byte, i: int, instructions: ^[dynamic]ByteInstructions) -> (incr: int) {
+	incr = 0
+
+	switch bit_string_to_opt(s1) {
+	case .REGISTER_TO_REGISTER:
+		s2 := fmt.tprintf("%08b", data[i + 1])
+		incr += 1
+
+		switch bit_string_to_mod_field_code(string(s2[0:2])) {
+		case .REG_MODE:
+			append(instructions, mov_register_mode(s1, s2))
+		case .MEMORY_MODE_NO_DISPLACEMENT:
+			if string(s2[5:8]) == "110" {
+				append(
+					instructions,
+					mov_memory_no_displacement(
+						s1,
+						s2,
+						(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+					),
+				)
+				incr += 2
+			} else {
+				append(instructions, mov_memory_no_displacement(s1, s2))
+			}
+		case .MEMORY_MODE_8_BIT_DISPLACEMENT:
+			append(instructions, mov_memory_mode_displacement(s1, s2, u8(data[i + 2])))
+			incr += 1
+		case .MEMORY_MODE_16_BIT_DISPLACEMENT:
+			append(
+				instructions,
+				mov_memory_mode_displacement(
+					s1,
+					s2,
+					(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+				),
+			)
+			incr += 2
+		case .UNDEFINED:
+			msg := fmt.tprint(
+				"Undefined Mod_Field_Code for instruction with bytes: ",
+				s1,
+				s2,
+			)
+			panic(msg)
+		}
+	case .IMMEDIATE_TO_REG_NO_DISP:
+		switch s1[4] {
+		case '0':
+			b2 := data[i + 1]
+			incr += 1
+			append(instructions, mov_immediate_to_register(s1, u8(b2)))
+		case '1':
+			b2 := data[i + 1]
+			b3 := data[i + 2]
+			incr += 2
+
+			append(instructions, mov_immediate_to_register(s1, (u16(b3) << 8) | u16(b2)))
+		}
+	case .IMMEDIATE_TO_REG_DISP:
+		s2 := fmt.tprintf("%08b", data[i + 1])
+		incr += 1
+
+		switch bit_string_to_mod_field_code(string(s2[0:2])) {
+		case .REG_MODE:
+			switch s1[7] {
+			case '0':
+				b3 := data[i + 2]
+				incr += 1
+				append(instructions, mov_register_mode(s1, s2, u8(b3)))
+			case '1':
+				b3 := data[i + 2]
+				b4 := data[i + 3]
+				incr += 2
+				append(instructions, mov_register_mode(s1, s2, (u16(b4) << 8) | u16(b3)))
+
+			}
+		case .MEMORY_MODE_NO_DISPLACEMENT:
+			if string(s2[5:8]) == "110" {
+
+				switch s1[7] {
+				case '0':
+					append(
+						instructions,
+						mov_memory_no_displacement(
+							s1,
+							s2,
+							(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+							u8(data[i + 4]),
+						),
+					)
+					incr += 3
+				case '1':
+					append(
+						instructions,
+						mov_memory_no_displacement(
+							s1,
+							s2,
+							(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+							(u16(data[i + 5]) << 8) | u16(data[i + 4]),
+						),
+					)
+					incr += 4
+				}
+			} else {
+				switch s1[7] {
+				case '0':
+					append(
+						instructions,
+						mov_memory_no_disp_with_data(s1, s2, u8(data[i + 2])),
+					)
+					incr += 1
+				case '1':
+					append(
+						instructions,
+						mov_memory_no_disp_with_data(
+							s1,
+							s2,
+							(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+						),
+					)
+					incr += 2
+				}
+			}
+		case .MEMORY_MODE_8_BIT_DISPLACEMENT:
+			switch s1[7] {
+			case '0':
+				append(
+					instructions,
+					mov_memory_mode_displacement(s1, s2, u8(data[i + 2]), u8(data[i + 3])),
+				)
+				incr += 2
+			case '1':
+				append(
+					instructions,
+					mov_memory_mode_displacement(
+						s1,
+						s2,
+						u8(data[i + 2]),
+						(u16(data[i + 4]) << 8) | u16(data[i + 3]),
+					),
+				)
+				incr += 3
+
+			}
+		case .MEMORY_MODE_16_BIT_DISPLACEMENT:
+			switch s1[7] {
+			case '0':
+				append(
+					instructions,
+					mov_memory_mode_displacement(
+						s1,
+						s2,
+						(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+						u8(data[i + 4]),
+					),
+				)
+				incr += 3
+			case '1':
+				append(
+					instructions,
+					mov_memory_mode_displacement(
+						s1,
+						s2,
+						(u16(data[i + 3]) << 8) | u16(data[i + 2]),
+						(u16(data[i + 5]) << 8) | u16(data[i + 4]),
+					),
+				)
+				incr += 4
+			}
+		case .UNDEFINED:
+			msg := fmt.tprint(
+				"Undefined Mod_Field_Code for instruction with bytes: ",
+				s1,
+				s2,
+			)
+			panic(msg)
+		}
+	case .UNDEFINED:
+		msg := fmt.tprint("Undefined opcode for byte: ", s1)
+		panic(msg)
+	}
+
+	return incr
+}
