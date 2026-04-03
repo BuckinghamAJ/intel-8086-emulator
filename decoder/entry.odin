@@ -51,7 +51,6 @@ read_binary_listing :: proc(path: string) -> (bi: [dynamic]ByteInstructions, err
 		len(data),
 		allocator = context.temp_allocator,
 	)
-	defer delete(instructions)
 
 	fmt.println("Total bytes:", len(data))
 
@@ -67,14 +66,17 @@ read_binary_listing :: proc(path: string) -> (bi: [dynamic]ByteInstructions, err
 		s1 := fmt.tprintf("%08b", b1)
 		fmt.println("Processing byte: ", s1)
 		if ok := strings.has_prefix(s1, "1100011"); ok {data_transfer_code = .MOV}
-		if ok := strings.has_prefix(s1, "11011"); ok {data_transfer_code = .MOV}
+		if ok := strings.has_prefix(s1, "1011"); ok {data_transfer_code = .MOV}
 		if ok := strings.has_prefix(s1, "100010"); ok {data_transfer_code = .MOV}
+		if ok := strings.has_prefix(s1, "1010000"); ok {data_transfer_code = .MOV}
+		if ok := strings.has_prefix(s1, "1010001"); ok {data_transfer_code = .MOV}
+
 
 		switch data_transfer_code {
 		case .MOV:
 			incr += decode_mov(s1, data, i, &instructions)
 		case .UNDEFINED:
-	 		panic(fmt.tprint("Undefined opcode for byte: ", s1))
+			panic(fmt.tprint("Undefined opcode for byte: ", s1))
 		}
 
 
@@ -99,6 +101,9 @@ entry :: proc(listing_path: string) {
 
 	// fmt.printfln("ByteInstructions: %#v", instructions)
 	fmt.println("Successfully read binary listing. Total instructions:", len(instructions))
-	asm_write(instructions)
+	if err := asm_write(instructions); err != nil {
+		errStr := fmt.tprintfln("There was an error in asm_write: %v", err)
+		panic(errStr)
+	}
 
 }

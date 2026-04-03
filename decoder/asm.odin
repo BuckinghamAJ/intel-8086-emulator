@@ -1,15 +1,17 @@
 package decoder
 
 import "core:fmt"
-Error :: enum {
+
+SharedErrors :: enum {
 	None,
 	Invalid_Opcode,
-	Invalid_Mod_Field_Code,
-	Undefined_Memory_Mode,
-	Error_Rm_Assembly
 }
 
-// direction: 0 = reg is source, 1 = reg is destination
+Error :: union {
+	SharedErrors,
+	Mov_Errors,
+}
+
 
 AssemblyInstructions :: struct {
 	code : Data_Transfer_Code,
@@ -37,10 +39,14 @@ write_from_byte_instructions :: proc(byte_instructions: [dynamic]ByteInstruction
 		case .MOV:
 			assembly_instructions[i] = mov_create_assembly_instructions_from(bi) or_return
 		}
+
+		// fmt.println("Byte Instruction: ", bi)
+		// fmt.println("Assembly Instruction: ", assembly_instructions[i])
 		fmt.println(ai_write(assembly_instructions[i]))
 	}
 
-	return .None
+
+	return nil
 }
 
 write_from_assemble_instructions :: proc(assembly_instructions: []AssemblyInstructions) -> (err: Error) {
@@ -48,7 +54,7 @@ write_from_assemble_instructions :: proc(assembly_instructions: []AssemblyInstru
 		fmt.println(ai_write(ai))
 	}
 
-	return .None
+	return nil
 }
 
 asm_write :: proc{
