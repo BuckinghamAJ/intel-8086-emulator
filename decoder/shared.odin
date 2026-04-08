@@ -92,24 +92,26 @@ make_accumulator_immediate :: proc(s1: string, code: Transfer_Code, data: union 
 reg_assembly_data :: proc(data: union {
 		u8,
 		u16,
-	}, w: rune) -> string {
-	result: string
+	}) -> string {
 
-
-	switch w {
-	case '1':
-		switch d in data {
-		case u8:
-			result = fmt.tprintf("byte %d", transmute(i8)d)
-		case u16:
-			result = fmt.tprintf("word %d", transmute(i16)d)
-		}
-	case:
-		result = fmt.tprintf("%d", data)
+	switch d in data {
+	case u8:
+		return fmt.tprintf("%d", transmute(i8)d)
+	case u16:
+		return fmt.tprintf("%d", transmute(i16)d)
 	}
 
+	return "0"
+}
 
-	return result
+memory_size_prefix :: proc(word_op: rune) -> string {
+	assert(word_op == '0' || word_op == '1', "Invalid word_op value. Expected '0' or '1'.")
+
+	if word_op == '0' {
+		return "byte"
+	}
+
+	return "word"
 }
 
 
@@ -234,7 +236,11 @@ rm_assembly :: proc(bi: ByteInstructions, mod: Mod_Field_Code) -> (s: string, er
 		case .REG_MODE:
 			if word_op == '0' {return "DH", nil} else {return "SI", nil}
 		case .MEMORY_MODE_NO_DISPLACEMENT:
-			return fmt.tprintf("[%d]", bi.data), nil
+			if _, ok := bi.direction.?; ok {
+				return fmt.tprintf("[%d]", bi.data), nil
+			}
+
+			return fmt.tprintf("[%d]", bi.displacement), nil
 		case .MEMORY_MODE_8_BIT_DISPLACEMENT:
 			if bi.displacement == u8(0) {
 				return "[BP]", nil
@@ -289,15 +295,26 @@ reg_assembly_instructions :: proc(bi: ByteInstructions) -> (ai: AssemblyInstruct
 	} else {
 
 		if bi.rm != "" {
-			assembly_instruction.source = reg_assembly(bi.data, bi.word_op)
-			assembly_instruction.destination = rm_assembly(
+			rm_operand := rm_assembly(
 				bi,
 				assembly_instruction.mod_field,
 			) or_return
+
+			assembly_instruction.source = reg_assembly(bi.data)
+
+			if assembly_instruction.mod_field == .REG_MODE {
+				assembly_instruction.destination = rm_operand
+			} else {
+				assembly_instruction.destination = fmt.tprintf(
+					"%s %s",
+					memory_size_prefix(bi.word_op),
+					rm_operand,
+				)
+			}
 		} else {
 
 			assembly_instruction.destination = reg_assembly(bi.reg, bi.word_op)
-			assembly_instruction.source = fmt.tprintf("%d", bi.data)
+			assembly_instruction.source = reg_assembly(bi.data)
 		}
 	}
 
