@@ -2,6 +2,34 @@ package decoder
 
 import "core:fmt"
 
+Opcode_Variant :: enum {
+	UNDEFINED,
+	REGMEM_WITH_REG,          // MOV: REGISTER_TO_REGISTER, ADD/SUB/CMP: REGMEM_WITH_REG
+	IMMEDIATE_TO_REG_NO_MOD,  // MOV only: 1011wreg
+	IMMEDIATE_TO_REGMEM,      // MOV: IMMEDIATE_TO_REG_DISP, ADD/SUB/CMP: IMMEDIATE_TO_REGMEM
+	IMMEDIATE_TO_ACCUMULATOR, // ADD/SUB/CMP accumulator, MOV memory/accumulator
+	ACCUMULATOR_MEMORY,       // MOV only: memory <-> accumulator
+}
+
+Mod_Field_Code :: enum {
+	UNDEFINED,
+	MEMORY_MODE_NO_DISPLACEMENT,
+	MEMORY_MODE_8_BIT_DISPLACEMENT,
+	MEMORY_MODE_16_BIT_DISPLACEMENT,
+	REG_MODE,
+}
+
+SharedErrors :: enum {
+	None,
+	Invalid_Opcode,
+}
+
+DecodeErrors :: enum {
+	Invalid_Mod_Field_Code,
+	Undefined_Memory_Mode,
+	Error_Rm_Assembly,
+}
+
 check_next_byte :: proc(s2: string, dtc: ^Transfer_Code) {
 	switch s2[2:5] {
 	case "000":
@@ -271,6 +299,61 @@ rm_assembly :: proc(bi: ByteInstructions, mod: Mod_Field_Code) -> (s: string, er
 
 
 	return "UNKNOWN", .Error_Rm_Assembly
+}
+
+/*
+Shared helper for decoding the reg/mem-with-register encoding variant.
+Used by both MOV (REGISTER_TO_REGISTER) and ADD/SUB/CMP (REGMEM_WITH_REG).
+Reads byte2 + any displacement bytes, constructs ByteInstructions via make_reg_to_reg.
+*/
+decode_regmem_with_reg :: proc(
+	s1: string,
+	data: []byte,
+	i: int,
+	code: Transfer_Code,
+	instructions: ^[dynamic]ByteInstructions,
+) -> (incr: int) {
+	s2 := fmt.tprintf("%08b", data[i + 1])
+	incr += 1
+
+	switch bit_string_to_mod_field_code(string(s2[0:2])) {
+	case .REG_MODE:
+		append(instructions, make_reg_to_reg(s1, s2, code))
+	case .MEMORY_MODE_NO_DISPLACEMENT:
+		if string(s2[5:8]) == "110" {
+			append(
+				instructions,
+				make_reg_to_reg(
+					s1,
+					s2,
+					code,
+					data = le_bytes_to_u16(data[i + 2], data[i + 3]),
+				),
+			)
+			incr += 2
+		} else {
+			append(instructions, make_reg_to_reg(s1, s2, code))
+		}
+	case .MEMORY_MODE_8_BIT_DISPLACEMENT:
+		append(instructions, make_reg_to_reg(s1, s2, code, displacement = u8(data[i + 2])))
+		incr += 1
+	case .MEMORY_MODE_16_BIT_DISPLACEMENT:
+		append(
+			instructions,
+			make_reg_to_reg(
+				s1,
+				s2,
+				code,
+				displacement = le_bytes_to_u16(data[i + 2], data[i + 3]),
+			),
+		)
+		incr += 2
+	case .UNDEFINED:
+		msg := fmt.tprint("Undefined Mod_Field_Code for instruction with bytes: ", s1, s2)
+		panic(msg)
+	}
+
+	return incr
 }
 
 reg_assembly_instructions :: proc(bi: ByteInstructions) -> (ai: AssemblyInstructions, err: Error) {

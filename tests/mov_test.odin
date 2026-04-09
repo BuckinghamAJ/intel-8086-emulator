@@ -54,7 +54,7 @@ test_rm_assembly :: proc(t: ^testing.T) {
 			byte1 = decoder.Byte1{ word_op = tc.word_op },
 		}
 		result, err := decoder.rm_assembly(bi, tc.mod)
-		testing.expect(t, err == decoder.Error.None)
+		testing.expect(t, err == nil)
 		testing.expect(t, result == tc.expected)
 	}
 
