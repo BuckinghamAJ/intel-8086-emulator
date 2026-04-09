@@ -1,9 +1,9 @@
 package decoder
 
 import "core:fmt"
-jump_op_codes :: proc(s1 :string, dtc: ^Transfer_Code) {
-	switch s1 {
-	case "01110101": {dtc^ = .JNZ}
+jump_op_codes :: #force_inline proc(b1: u8, dtc: ^Transfer_Code) {
+	switch b1 {
+	case 0b01110101: {dtc^ = .JNZ}
 	}
 }
 

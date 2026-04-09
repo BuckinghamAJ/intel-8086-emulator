@@ -3,12 +3,19 @@ package decoder
 import "core:fmt"
 import "core:strings"
 
-mov_op_code_checks :: proc(s1: string, dtc: ^Transfer_Code) {
-	if ok := strings.has_prefix(s1, "110001"); ok {dtc^ = .MOV}
-	if ok := strings.has_prefix(s1, "1011"); ok {dtc^ = .MOV}
-	if ok := strings.has_prefix(s1, "100010"); ok {dtc^ = .MOV}
-	if ok := strings.has_prefix(s1, "1010000"); ok {dtc^ = .MOV}
-	if ok := strings.has_prefix(s1, "1010001"); ok {dtc^ = .MOV}
+mov_op_code_checks :: #force_inline proc(b1: u8, dtc: ^Transfer_Code) {
+	switch {
+	case (b1 & 0b11111100) == 0b11000100: // 110001xx
+		dtc^ = .MOV
+	case (b1 & 0b11110000) == 0b10110000: // 1011xxxx
+		dtc^ = .MOV
+	case (b1 & 0b11111100) == 0b10001000: // 100010xx
+		dtc^ = .MOV
+	case (b1 & 0b11111110) == 0b10100000: // 1010000x
+		dtc^ = .MOV
+	case (b1 & 0b11111110) == 0b10100010: // 1010001x
+		dtc^ = .MOV
+	}
 }
 
 le_bytes_to_u16 :: proc(low: u8, high: u8) -> u16 {

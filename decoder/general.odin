@@ -3,13 +3,21 @@ package decoder
 import "core:fmt"
 import "core:strings"
 
-general_op_code_checks :: proc(s1: string, dtc: ^Transfer_Code) {
-	if ok := strings.has_prefix(s1, "000000"); ok {dtc^ = .ADD}
-	if ok := strings.has_prefix(s1, "0000010"); ok {dtc^ = .ADD}
-	if ok := strings.has_prefix(s1, "001010"); ok {dtc^ = .SUB}
-	if ok := strings.has_prefix(s1, "0010110"); ok {dtc^ = .SUB}
-	if ok := strings.has_prefix(s1, "001110"); ok {dtc^ = .CMP}
-	if ok := strings.has_prefix(s1, "0011110"); ok {dtc^ = .CMP}
+general_op_code_checks :: #force_inline proc(b1: u8, dtc: ^Transfer_Code) {
+	switch {
+	case (b1 & 0b11111100) == 0b00000000: // 000000xx
+		dtc^ = .ADD
+	case (b1 & 0b11111110) == 0b00000100: // 0000010x
+		dtc^ = .ADD
+	case (b1 & 0b11111100) == 0b00101000: // 001010xx
+		dtc^ = .SUB
+	case (b1 & 0b11111110) == 0b00101100: // 0010110x
+		dtc^ = .SUB
+	case (b1 & 0b11111100) == 0b00111000: // 001110xx
+		dtc^ = .CMP
+	case (b1 & 0b11111110) == 0b00111100: // 0011110x
+		dtc^ = .CMP
+	}
 }
 
 _general_bit_string_to_opt :: proc(s: string) -> Opcode_Variant {

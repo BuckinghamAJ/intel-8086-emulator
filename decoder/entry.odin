@@ -3,7 +3,6 @@ package decoder
 import "core:log"
 import "core:fmt"
 import "core:os"
-import "core:strings"
 
 Byte1 :: struct {
 	opcode:    string,
@@ -49,13 +48,16 @@ ByteInstructions :: struct {
 	},
 }
 
-get_transfer_code :: proc(s1: string, dtc: ^Transfer_Code) -> bool {
-	if ok := strings.has_prefix(s1, "100000"); ok {return false}
+get_transfer_code :: proc(b1: u8, dtc: ^Transfer_Code) -> bool {
+	switch {
+	case (b1 & 0b11111100) == 0b10000000:
+		return false
+	}
 
 
-	jump_op_codes(s1, dtc)
-	mov_op_code_checks(s1, dtc)
-	general_op_code_checks(s1, dtc)
+	jump_op_codes(b1, dtc)
+	mov_op_code_checks(b1, dtc)
+	general_op_code_checks(b1, dtc)
 
 	return true
 }
@@ -84,7 +86,7 @@ read_binary_listing :: proc(path: string) -> (bi: [dynamic]ByteInstructions, err
 		s1 := fmt.tprintf("%08b", b1)
 		incr += 1
 		log.debug("Processing byte: ", s1)
-		if ok := get_transfer_code(s1, &code); !ok {
+		if ok := get_transfer_code(b1, &code); !ok {
 			s2 := fmt.tprintf("%08b", data[i+1])
 			check_next_byte(s2, &code)
 		}
