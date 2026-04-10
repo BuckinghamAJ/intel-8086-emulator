@@ -98,8 +98,8 @@ read_binary_listing :: proc(path: string) -> (bi: [dynamic]ByteInstructions, err
 			incr += decode_instructions(s1, data, i, code, &instructions)
 		case .JNZ:
 			incr += decode_jump(s1, data, i, &instructions)
-		case .UNDEFINED:
-			panic(fmt.tprint("Undefined opcode for byte: ", s1))
+		case:
+			panic(fmt.tprint("Unhandled opcode for byte: ", s1))
 		}
 
 
