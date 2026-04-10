@@ -1,4 +1,4 @@
-package decoder
+package sim
 
 import "core:log"
 import "core:fmt"
@@ -113,7 +113,7 @@ read_binary_listing :: proc(path: string) -> (bi: [dynamic]ByteInstructions, err
 	return instructions, os.General_Error.None
 }
 
-entry :: proc(listing_path: string) {
+decode :: proc(listing_path: string) {
 	// fmt.println("Decoder entry point called with listing file: ", listing_path)
 
 	instructions, err := read_binary_listing(listing_path)
@@ -124,7 +124,7 @@ entry :: proc(listing_path: string) {
 
 	// fmt.printfln("ByteInstructions: %#v", instructions)
 	log.debug("Successfully read binary listing. Total instructions: ", len(instructions))
-	if err := write_asm(instructions); err != nil {
+	if err := write_out_asm(instructions); err != nil {
 		errStr := fmt.tprintfln("There was an error in asm_write: %v", err)
 		panic(errStr)
 	}

@@ -1,4 +1,4 @@
-package decoder
+package sim
 
 import "core:fmt"
 

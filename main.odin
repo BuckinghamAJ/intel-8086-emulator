@@ -1,31 +1,86 @@
 package main
 
-import "core:log"
 import "base:runtime"
 import "core:fmt"
+import "core:log"
 import "core:os"
-import "decoder"
+import "sim"
 
+CLI_EXECUTION_KEY :: [2]string{"decode", "simulate"}
+
+Error :: union{
+	os.Error,
+	sim.Error,
+}
+
+cwd :: proc() -> (dir: string, err: Error){
+	dir = os.get_working_directory(context.temp_allocator) or_return
+
+	return dir, nil
+}
+
+decode :: proc(listing_file: string) {
+
+	cwd, err := cwd()
+	assert(err == nil, fmt.tprintf("Error getting current working directory: %v", err))
+
+	sim.decode(fmt.tprintf("%s/listings/%s", cwd, listing_file))
+}
+
+simulate :: proc(listing_file: string) {
+	cwd, err := cwd()
+	assert(err == nil, fmt.tprintf("Error getting current working directory: %v", err))
+
+	list_path := fmt.tprintf("%s/listings/%s", cwd, listing_file)
+
+	// TODO: Seems silly need to fix
+	bit_instructions, e1 := sim.read_binary_listing(list_path);
+	assert(e1 == nil, fmt.tprintf("Error reading binary listing: %v", err))
+
+	asm_instructions, e := sim.write_asm_from(bit_instructions)
+	assert(e == nil, fmt.tprintf("Error writing assembly instructions: %v", e))
+
+	sim.simulate(asm_instructions)
+
+}
+
+is_valid_execution_key :: proc(exec_key: string) -> bool {
+	for key, _ in CLI_EXECUTION_KEY {
+		if key == exec_key {
+			return true
+		}
+	}
+
+	return false
+}
 
 main :: proc() {
-	assert(len(os.args) > 1, "No arguments provided. Please provide a path to the listing file.")
-	assert(
-		len(os.args) <= 2,
-		"Too many arguments provided. Please provide only the path to the listing file.",
-	)
-
 	logger := log.create_console_logger()
 	context.logger = logger
 
-	listing_file := os.args[1]
-	// listing_file := "listing_0040_challenge_movs"
-	cwd, err := os.get_working_directory(context.temp_allocator)
-	if err != nil {
-		fmt.println("Error getting current working directory: ", err)
-		return
-	}
+	cli_args := os.args[1:]
+	assert(len(cli_args) > 0, "No arguments provided. Please provide a path to the listing file.")
+	assert(
+		is_valid_execution_key(cli_args[0]),
+		fmt.tprintf(
+			"Invalid execution key provided. Please provide a valid execution key. %v",
+			CLI_EXECUTION_KEY,
+		),
+	)
 
-	decoder.entry(fmt.tprintf("%s/listings/%s", cwd,listing_file))
-	// decode.read(fmt.tprintf("%s/listings/%s", cwd,listing_file))
+	switch cli_args[0] {
+	case "decode":
+		assert(
+			len(cli_args) == 2,
+			"Invalid number of arguments provided for decode execution. Please provide only the path to the listing file.",
+		)
+		decode(cli_args[1])
+	case "simulate":
+		assert(
+			len(cli_args) == 2,
+			"Invalid number of arguments provided for simulate execution. Please provide only the path to the listing file.",
+		)
+		simulate(cli_args[1])
+	}
 
 }

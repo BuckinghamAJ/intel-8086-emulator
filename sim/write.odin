@@ -1,4 +1,4 @@
-package decoder
+package sim
 
 import "core:fmt"
 
@@ -13,6 +13,7 @@ AssemblyInstructions :: struct {
 	mod_field: Mod_Field_Code,
 	source: string,
 	destination: string,
+	bytes_instruction: ByteInstructions
 }
 
 
@@ -67,7 +68,31 @@ write_from_byte_instructions :: proc(byte_instructions: [dynamic]ByteInstruction
 	return nil
 }
 
+write_asm_from :: proc(byte_instructions: [dynamic]ByteInstructions) -> (ai: []AssemblyInstructions, err: Error){
 
-write_asm :: proc{
+	ai_i := make([]AssemblyInstructions, len(byte_instructions))
+	defer delete(ai_i)
+
+	for bi, i in byte_instructions {
+		switch bi.code {
+		case .MOV, .ADD, .SUB, .CMP:
+			ai_i[i] = write_assembly_instructions(bi) or_return
+			ai_i[i].bytes_instruction = bi
+		case .JNZ:
+			ai_i[i] = AssemblyInstructions{
+				code = bi.code,
+				bytes_instruction = bi,
+			}
+		case .UNDEFINED:
+			panic("WTF Why Are You Here!")
+		}
+
+	}
+
+	return ai_i, err
+}
+
+
+write_out_asm :: proc{
 	write_from_byte_instructions,
 }
