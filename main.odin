@@ -35,11 +35,10 @@ simulate :: proc(listing_file: string) {
 
 	// TODO: Seems silly need to fix
 	bit_instructions, e1 := sim.read_binary_listing(list_path);
-	assert(e1 == nil, fmt.tprintf("Error reading binary listing: %v", err))
+	assert(e1 == nil, fmt.tprintf("Error reading binary listing: %v", e1))
 
 	asm_instructions, e := sim.write_asm_from(bit_instructions)
 	assert(e == nil, fmt.tprintf("Error writing assembly instructions: %v", e))
-
 	sim.simulate(asm_instructions)
 
 }

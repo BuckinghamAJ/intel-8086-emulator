@@ -1,14 +1,14 @@
 package sim
 
-import "core:log"
 import "core:fmt"
+import "core:log"
 import "core:os"
 
 Byte1 :: struct {
-	opcode:    string,
-	direction: Maybe(rune),
-	word_op:   rune,
-	sign_extension: Maybe(rune)
+	opcode:         string,
+	direction:      Maybe(rune),
+	word_op:        rune,
+	sign_extension: Maybe(rune),
 }
 
 Byte2 :: struct {
@@ -19,7 +19,7 @@ Byte2 :: struct {
 
 Transfer_Code :: union {
 	Data_Transfer_Code,
-	Jump_Codes
+	Jump_Codes,
 }
 
 Data_Transfer_Code :: enum {
@@ -46,6 +46,7 @@ ByteInstructions :: struct {
 		u8,
 		u16,
 	},
+	size:         u16,
 }
 
 get_transfer_code :: proc(b1: u8, dtc: ^Transfer_Code) -> bool {
@@ -87,7 +88,7 @@ read_binary_listing :: proc(path: string) -> (bi: [dynamic]ByteInstructions, err
 		incr += 1
 		log.debug("Processing byte: ", s1)
 		if ok := get_transfer_code(b1, &code); !ok {
-			s2 := fmt.tprintf("%08b", data[i+1])
+			s2 := fmt.tprintf("%08b", data[i + 1])
 			check_next_byte(s2, &code)
 		}
 
@@ -102,6 +103,7 @@ read_binary_listing :: proc(path: string) -> (bi: [dynamic]ByteInstructions, err
 			panic(fmt.tprint("Unhandled opcode for byte: ", s1))
 		}
 
+		instructions[len(instructions) - 1].size = u16(incr)
 
 		i += incr
 

@@ -1,5 +1,6 @@
 package sim
 
+import "core:log"
 import "core:fmt"
 
 Error :: union {
@@ -15,6 +16,7 @@ AssemblyInstructions :: struct {
 	destination: string,
 	bytes_instruction: ByteInstructions
 }
+
 
 
 ai_write :: proc(ai: AssemblyInstructions, code: Transfer_Code) -> (s: string) {
@@ -70,8 +72,8 @@ write_from_byte_instructions :: proc(byte_instructions: [dynamic]ByteInstruction
 
 write_asm_from :: proc(byte_instructions: [dynamic]ByteInstructions) -> (ai: []AssemblyInstructions, err: Error){
 
-	ai_i := make([]AssemblyInstructions, len(byte_instructions))
-	defer delete(ai_i)
+	ai_i := make([]AssemblyInstructions, len(byte_instructions), allocator = context.temp_allocator)
+	// defer delete(ai_i)
 
 	for bi, i in byte_instructions {
 		switch bi.code {
