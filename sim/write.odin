@@ -41,7 +41,7 @@ write_assembly_instructions :: proc(
 			return mov_mem_accumulator_instructions(byte_instruction, byte_instruction.opcode)
 		case .REGMEM_WITH_REG, .IMMEDIATE_TO_REG_NO_MOD, .IMMEDIATE_TO_REGMEM:
 			return reg_assembly_instructions(byte_instruction)
-		case .UNDEFINED:
+		case .UNDEFINED, nil:
 			return {}, .Invalid_Opcode
 		case .IMMEDIATE_TO_ACCUMULATOR:
 			return {}, .Invalid_Opcode
@@ -61,7 +61,7 @@ write_from_byte_instructions :: proc(byte_instructions: [dynamic]ByteInstruction
 			fmt.println(ai_write(assembly_instructions, bi.code))
 		case .JNZ:
 			fmt.printfln("%s %d", bi.code, bi.data)
-		case .UNDEFINED:
+		case .UNDEFINED, nil:
 			panic("Should have found an OpCode by now!")
 		}
 

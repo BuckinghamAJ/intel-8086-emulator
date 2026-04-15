@@ -377,13 +377,15 @@ reg_assembly_instructions :: proc(bi: ByteInstructions) -> (ai: AssemblyInstruct
 
 	} else {
 
+		assembly_instruction.source = reg_assembly(bi.data)
+
+
 		if bi.rm != "" {
 			rm_operand := rm_assembly(
 				bi,
 				assembly_instruction.mod_field,
 			) or_return
 
-			assembly_instruction.source = reg_assembly(bi.data)
 
 			if assembly_instruction.mod_field == .REG_MODE {
 				assembly_instruction.destination = rm_operand
@@ -395,9 +397,7 @@ reg_assembly_instructions :: proc(bi: ByteInstructions) -> (ai: AssemblyInstruct
 				)
 			}
 		} else {
-
 			assembly_instruction.destination = reg_assembly(bi.reg, bi.word_op)
-			assembly_instruction.source = reg_assembly(bi.data)
 		}
 	}
 
