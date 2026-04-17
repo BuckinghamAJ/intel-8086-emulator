@@ -3,3 +3,5 @@
 debug_build*/*
 debug_build/**
 debug_build
+.DS_Store
+memory_dump.data

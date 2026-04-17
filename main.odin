@@ -1,5 +1,6 @@
 package main
 
+import "core:slice"
 import "base:runtime"
 import "core:fmt"
 import "core:log"
@@ -27,7 +28,8 @@ decode :: proc(listing_file: string) {
 	sim.decode(fmt.tprintf("%s/listings/%s", cwd, listing_file))
 }
 
-simulate :: proc(listing_file: string) {
+simulate :: proc(args: []string) {
+	listing_file := args[1]
 	cwd, err := cwd()
 	assert(err == nil, fmt.tprintf("Error getting current working directory: %v", err))
 
@@ -39,8 +41,9 @@ simulate :: proc(listing_file: string) {
 
 	asm_instructions, e := sim.write_asm_from(bit_instructions)
 	assert(e == nil, fmt.tprintf("Error writing assembly instructions: %v", e))
-	sim.simulate(asm_instructions)
 
+	dump := slice.contains(args, "--dump")
+	sim.simulate(asm_instructions, dump)
 }
 
 is_valid_execution_key :: proc(exec_key: string) -> bool {
@@ -76,10 +79,10 @@ main :: proc() {
 		decode(cli_args[1])
 	case "simulate":
 		assert(
-			len(cli_args) == 2,
+			len(cli_args) == 2 || len(cli_args) == 3,
 			"Invalid number of arguments provided for simulate execution. Please provide only the path to the listing file.",
 		)
-		simulate(cli_args[1])
+		simulate(cli_args)
 	}
 
 }

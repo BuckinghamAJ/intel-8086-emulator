@@ -1,5 +1,6 @@
 package sim
 
+import "core:os"
 import "core:fmt"
 import "core:log"
 import "core:slice"
@@ -250,7 +251,7 @@ is_reg_key :: proc(s: string) -> bool {
 	return false
 }
 
-simulate :: proc(asm_instructions: []AssemblyInstructions) {
+simulate :: proc(asm_instructions: []AssemblyInstructions, dump := false) {
 	flags := Flags{}
 	register := make(map[string]u16)
 	defer delete(register)
@@ -352,4 +353,13 @@ simulate :: proc(asm_instructions: []AssemblyInstructions) {
 
 
 	fmt.println("\tFlags:", strings.join(show_flags_set(flags), ""))
+
+	if dump {
+		err := os.write_entire_file("memory_dump.data", data=memory)
+		if err != nil {
+			log.error("Failed to write memory dump: ", err)
+			return
+		}
+	}
+
 }
