@@ -180,26 +180,35 @@ affected_register :: proc(ai: AssemblyInstructions) -> []string {
 handle_register_mov :: proc(ai: AssemblyInstructions, register: ^map[string]u16, memory: ^[]u8) {
 	prior := fmt.tprintf("%s:0x%x", ai.destination, register[ai.destination])
 
+	#partial switch ai.mod_field{
+		case .REG_MODE:
+			register[ai.destination] = register[ai.source] or_else handle_usigned_union(ai.bytes_instruction.data)
+		case .MEMORY_MODE_NO_DISPLACEMENT, .MEMORY_MODE_8_BIT_DISPLACEMENT, .MEMORY_MODE_16_BIT_DISPLACEMENT:
+			if is_reg_key(ai.source) {
+				register[ai.destination] = register[ai.source]
+			}
+			regs_affected := affected_register(ai)
+			defer delete(regs_affected)
 
-	// LOL: This is so dumb!
-	if strings.contains(ai.source, "[") {
-		memory_idx := int(handle_usigned_union(ai.bytes_instruction.data))
+			memory_idx := int(handle_usigned_union(ai.bytes_instruction.data))
+			if len(regs_affected) > 0 {
+				for reg, i in regs_affected{
+					memory_idx += int(register[reg])
+				}
+			}
 
-		register[ai.destination] = le_bytes_to_u16(memory[memory_idx], memory[memory_idx+1])
+			register[ai.destination] = le_bytes_to_u16(memory[memory_idx], memory[memory_idx+1])
 	}
-	else {
-		register[ai.destination] =
-			register[ai.source] or_else handle_usigned_union(ai.bytes_instruction.data)
-}
-
-
 
 	fmt.printf("%s->0x%x ", prior, register[ai.destination])
 }
 
 
 
-handle_register_with_flags :: proc(ai: AssemblyInstructions, flags: Flags, register: ^map[string]u16) {}
+handle_register_with_flags :: proc(ai: AssemblyInstructions, flags: Flags, register: ^map[string]u16, memory: ^[]u8) {
+
+
+}
 
 handle_register :: proc {
 	handle_register_mov,

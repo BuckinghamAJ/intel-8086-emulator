@@ -100,7 +100,7 @@ make_immediate_to_reg :: proc(s1: string, code: Transfer_Code, data: union {
 	return ByteInstructions {
 		code = code,
 		byte1 = Byte1{opcode = string(s1[0:4]), word_op = rune(s1[4])},
-		byte2 = Byte2{reg = string(s1[5:8])},
+		byte2 = Byte2{reg = string(s1[5:8]), mod = string(s1[0:2])},
 		data = data,
 	}
 }

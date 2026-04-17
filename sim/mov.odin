@@ -105,13 +105,16 @@ decode_mov :: proc(
 		case '0':
 			b2 := data[i + 1]
 			incr += 1
-			append(instructions, make_immediate_to_reg(s1,code = .MOV, data = u8(b2)))
+			tmp_bi := make_immediate_to_reg(s1,code = .MOV, data = u8(b2))
+			tmp_bi.mod = "11" // Specifically for this variant, we know it's always reg mode
+			append(instructions, tmp_bi)
 		case '1':
 			b2 := data[i + 1]
 			b3 := data[i + 2]
 			incr += 2
-
-			append(instructions, make_immediate_to_reg(s1,code = .MOV, data = (u16(b3) << 8) | u16(b2)))
+			tmp_bi := make_immediate_to_reg(s1,code = .MOV, data = (u16(b3) << 8) | u16(b2))
+			tmp_bi.mod = "11" // Specifically for this variant, we know it's always reg mode
+			append(instructions, tmp_bi)
 		}
 	case .IMMEDIATE_TO_REGMEM:
 		s2 := fmt.tprintf("%08b", data[i + 1])
